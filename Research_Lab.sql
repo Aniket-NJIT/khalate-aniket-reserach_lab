@@ -1,4 +1,4 @@
--- 1. Create the database if you haven't already (Just in case)
+-- 1. Create the database
 CREATE DATABASE IF NOT EXISTS research_lab;
 USE research_lab;
 
@@ -6,7 +6,7 @@ USE research_lab;
 SET FOREIGN_KEY_CHECKS = 0;
 
 -- -----------------------------------------------------
--- 2. DROP TABLES (This allows to re-run this script safely)
+-- 2. DROP TABLES
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS Is_Published;
 DROP TABLE IF EXISTS Is_Used;
@@ -219,17 +219,16 @@ INSERT INTO Works VALUES (207, 11, 'Consultant', 5);       -- Tony Stark
 -- Mentorship
 INSERT INTO Mentorship VALUES (101, 102, '2021-06-01', NULL);
 INSERT INTO Mentorship VALUES (102, 103, '2022-02-01', NULL);
--- Scenario: Dr. House mentors Harry (Both on Proj 10 -> Should show in report)
+
 INSERT INTO Mentorship VALUES (201, 203, '2021-09-01', NULL);
 
--- Scenario: Harry mentors Ron (Both on Proj 10 -> Should show in report)
+
 INSERT INTO Mentorship VALUES (203, 205, '2022-01-15', NULL);
 
--- Scenario: Tony Stark mentors Peter Parker (Both on Proj 11 -> Should show in report)
+
 INSERT INTO Mentorship VALUES (207, 206, '2023-02-01', NULL);
 
--- Scenario: Dr. Cooper mentors Hermione (Different Projects -> Should NOT show in "Same Project" report)
--- Cooper is on 11, Hermione is on 10.
+
 INSERT INTO Mentorship VALUES (202, 204, '2021-09-01', NULL);
 
 -- Equipment
@@ -241,10 +240,10 @@ INSERT INTO Equipment VALUES (22, '2018-05-20', 'Retired', 'Old Server Rack', 'C
 
 -- Is_Used
 INSERT INTO Is_Used VALUES (10, 102, '2023-11-01', NULL, 'Running Simulations');
--- Hermione is currently using the Electron Microscope
+
 INSERT INTO Is_Used VALUES (20, 204, '2023-12-01', NULL, 'Cell Analysis');
 
--- Ron used the Centrifuge last month (Returned)
+
 INSERT INTO Is_Used VALUES (21, 205, '2023-11-01', '2023-11-05', 'Mixing Chemicals');
 
 -- Publications
@@ -256,18 +255,17 @@ INSERT INTO Publication VALUES (911, 'Science', 'Polyjuice Potions', '2022-06-01
 INSERT INTO Publication VALUES (912, 'IEEE', 'Alchemy Algorithms', '2023-01-01', 'DOI/HERM3');
 INSERT INTO Publication VALUES (913, 'Journal of Magic', 'Defense Arts', '2022-03-15', 'DOI/HARRY1');
 
--- Is_Published
+
 INSERT INTO Is_Published VALUES (101, 901);
 INSERT INTO Is_Published VALUES (102, 901);
 INSERT INTO Is_Published VALUES (103, 902);
 INSERT INTO Is_Published VALUES (102, 903);
--- Hermione's 3 papers
+
 INSERT INTO Is_Published VALUES (204, 910);
 INSERT INTO Is_Published VALUES (204, 911);
 INSERT INTO Is_Published VALUES (204, 912);
 
--- Harry's paper
 INSERT INTO Is_Published VALUES (203, 913);
 
--- Dr. House co-authored Hermione's Nature paper
+
 INSERT INTO Is_Published VALUES (201, 910);
