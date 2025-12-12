@@ -1,0 +1,219 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<h2>Member Management</h2>
+
+<!-- 1. ADD NEW MEMBER -->
+<div class="card mb-4 border-success">
+    <div class="card-header bg-success text-white">Add New Member (Assign to Project)</div>
+    <div class="card-body">
+        <form method="post">
+            <input type="hidden" name="add_member" value="true">
+            <div class="row g-2">
+                <!-- Member Details -->
+                <div class="col-md-2">
+                    <input type="number" name="mid" class="form-control" placeholder="ID (e.g. 105)" required>
+                </div>
+                <div class="col-md-3">
+                    <input type="text" name="name" class="form-control" placeholder="Name" required>
+                </div>
+                <div class="col-md-3">
+                    <input type="date" name="join_date" class="form-control" required>
+                </div>
+                <div class="col-md-2">
+                    <!-- Added ID and onChange event to trigger JS -->
+                    <select name="member_type" id="typeSelector" class="form-control" onchange="toggleFields()">
+                        <option value="Student">Student</option>
+                        <option value="Faculty">Faculty</option>
+                        <option value="Collaborator">Collaborator</option>
+                    </select>
+                </div>
+
+                <!-- 1. STUDENT FIELDS -->
+                <div class="col-md-12 mt-2 type-field" id="studentFields">
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <input type="text" name="major" class="form-control" placeholder="Major (e.g. CS)">
+                        </div>
+                        <div class="col-md-6">
+                            <input type="text" name="level" class="form-control" placeholder="Level (e.g. PhD)">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. FACULTY FIELDS -->
+                <div class="col-md-12 mt-2 type-field" id="facultyFields" style="display:none;">
+                    <input type="text" name="department" class="form-control" placeholder="Department (e.g. Biology)">
+                </div>
+
+                <!-- 3. COLLABORATOR FIELDS -->
+                <div class="col-md-12 mt-2 type-field" id="collaboratorFields" style="display:none;">
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <input type="text" name="affiliation" class="form-control" placeholder="Affiliation (e.g. NASA)">
+                        </div>
+                        <div class="col-md-6">
+                            <input type="text" name="biography" class="form-control" placeholder="Short Biography">
+                        </div>
+                    </div>
+                </div>
+
+                
+                <div class="col-md-4 mt-3">
+                    <label class="form-label small text-muted mb-0">Assign Project:</label>
+                    <select name="pid" class="form-control" required>
+                        <option value="">-- Select Project --</option>
+                        {% for p in project_list %}
+                            <option value="{{ p['PID'] }}">{{ p['Title'] }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3 mt-3">
+                    <label class="form-label small text-muted mb-0">Hours/Week:</label>
+                    <input type="number" name="hours" class="form-control" placeholder="e.g. 10" required>
+                </div>
+
+                <div class="col-md-3 mt-4 pt-1">
+                    <button type="submit" class="btn btn-success w-100">Add & Assign</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 2. MEMBER LIST -->
+<h4>Current Lab Members</h4>
+<table class="table table-striped align-middle">
+    <thead><tr><th>ID</th><th>Name</th><th>Type</th><th>Join Date</th><th>Actions</th></tr></thead>
+    <tbody>
+        {% for member in members %}
+        <tr>
+            <td>{{ member['MID'] }}</td>
+            <td>{{ member['Name'] }}</td>
+            <td>{{ member['Member_Type'] }}</td>
+            <td>{{ member['Join_Date'] }}</td>
+            <td>
+                <button type="button" class="btn btn-warning btn-sm" 
+                        data-bs-toggle="modal" 
+                        data-bs-target="#editMemberModal"
+                        data-mid="{{ member['MID'] }}"
+                        data-name="{{ member['Name'] }}"
+                        data-type="{{ member['Member_Type'] }}"
+                        data-date="{{ member['Join_Date'] }}">
+                    Edit
+                </button>
+                <form method="post" style="display:inline;" onsubmit="return confirm('Delete this member?');">
+                    <input type="hidden" name="delete_member" value="true">
+                    <input type="hidden" name="mid_to_delete" value="{{ member['MID'] }}">
+                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- 3. SEARCH MEMBERS -->
+<div class="card mb-4 mt-4">
+    <div class="card-header bg-light">Find Members by Grant Funding</div>
+    <div class="card-body">
+        <form method="post">
+            <input type="hidden" name="grant_search" value="true">
+            <div class="input-group">
+                <input type="number" name="grant_id_search" class="form-control" placeholder="Enter Grant ID (e.g. 500)" required>
+                <button class="btn btn-primary" type="submit">Search</button>
+            </div>
+        </form>
+        {% if members_by_grant %}
+        <div class="mt-3">
+            <h5>Members funded by this grant:</h5>
+            <ul class="list-group">
+                {% for m in members_by_grant %}
+                <li class="list-group-item">{{ m['Name'] }} ({{ m['Member_Type'] }})</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 4. MENTORSHIPS -->
+<h4 class="mt-4">Mentorships on Same Project</h4>
+<div class="card">
+    <ul class="list-group list-group-flush">
+        {% for m in mentorships %}
+        <li class="list-group-item">
+            Project: <strong>{{ m['Title'] }}</strong> | Mentor: {{ m['Mentor'] }} -> Mentee: {{ m['Mentee'] }}
+        </li>
+        {% else %}
+        <li class="list-group-item text-muted">No matching mentorships found.</li>
+        {% endfor %}
+    </ul>
+</div>
+
+<!-- 5. EDIT MEMBER MODAL -->
+<div class="modal fade" id="editMemberModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title">Edit Member</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <form method="post">
+                    <input type="hidden" name="update_member" value="true">
+                    <div class="mb-3">
+                        <label>Member ID</label>
+                        <input type="number" name="mid" id="edit_mid" class="form-control" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label>Name</label>
+                        <input type="text" name="name" id="edit_name" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label>Join Date</label>
+                        <input type="date" name="join_date" id="edit_date" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label>Type</label>
+                        <select name="member_type" id="edit_type" class="form-control">
+                            <option value="Student">Student</option>
+                            <option value="Faculty">Faculty</option>
+                            <option value="Collaborator">Collaborator</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    function toggleFields() {
+        var type = document.getElementById("typeSelector").value;
+        
+        
+        document.getElementById("studentFields").style.display = "none";
+        document.getElementById("facultyFields").style.display = "none";
+        document.getElementById("collaboratorFields").style.display = "none";
+        
+        // Show based on selection
+        if (type === "Student") {
+            document.getElementById("studentFields").style.display = "block";
+        } else if (type === "Faculty") {
+            document.getElementById("facultyFields").style.display = "block";
+        } else if (type === "Collaborator") {
+            document.getElementById("collaboratorFields").style.display = "block";
+        }
+    }
+
+    // Modal Population Logic
+    var editModal = document.getElementById('editMemberModal');
+    editModal.addEventListener('show.bs.modal', function (event) {
+        var button = event.relatedTarget;
+        document.getElementById('edit_mid').value = button.getAttribute('data-mid');
+        document.getElementById('edit_name').value = button.getAttribute('data-name');
+        document.getElementById('edit_type').value = button.getAttribute('data-type');
+        document.getElementById('edit_date').value = button.getAttribute('data-date');
+    });
+</script>
+{% endblock %}

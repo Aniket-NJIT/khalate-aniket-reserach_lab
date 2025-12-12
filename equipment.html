@@ -1,0 +1,223 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<h2 class="mb-4">Equipment Usage Tracking</h2>
+
+<!-- ADD NEW EQUIPMENT -->
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-4 border-success">
+            <div class="card-header bg-success text-white">Add New Equipment</div>
+            <div class="card-body">
+                <form method="post">
+                    <input type="hidden" name="add_equipment" value="true">
+                    <div class="row g-2">
+                        <div class="col-md-3"><input type="number" name="eid" class="form-control" placeholder="ID" required></div>
+                        <div class="col-md-5"><input type="text" name="name" class="form-control" placeholder="Name" required></div>
+                        <div class="col-md-4"><input type="date" name="pur_date" class="form-control" required></div>
+                        <div class="col-md-6"><input type="text" name="type" class="form-control" placeholder="Type" required></div>
+                        <div class="col-md-6">
+                            <select name="status" class="form-control">
+                                <option>Available</option><option>In Use</option><option>Retired</option>
+                            </select>
+                        </div>
+                        <div class="col-12 mt-2"><button class="btn btn-success w-100">Add Equipment</button></div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- CHECK STATUS -->
+    <div class="col-md-6">
+        <div class="card mb-4 border-secondary">
+            <div class="card-header bg-secondary text-white">Check Equipment Status</div>
+            <div class="card-body">
+                <form method="post">
+                    <div class="input-group mb-3">
+                        <input type="number" name="eid_search" class="form-control" placeholder="Enter Equipment ID" required>
+                        <button class="btn btn-outline-secondary" type="submit">Search</button>
+                    </div>
+                </form>
+                {% if search_result %}
+                <div class="alert alert-info mb-0">
+                    <strong>{{ search_result['Name'] }}</strong> ({{ search_result['Type'] }}) is <strong>{{ search_result['Status'] }}</strong>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- INVENTORY LIST -->
+<div class="card shadow-sm mb-5">
+    <div class="card-header bg-dark text-white">All Equipment Inventory</div>
+    <div class="card-body p-0">
+        <table class="table table-striped table-hover align-middle mb-0">
+            <thead class="table-secondary">
+                <tr><th>ID</th><th>Name</th><th>Type</th><th>Status</th><th>Purchase Date</th><th>Actions</th></tr>
+            </thead>
+            <tbody>
+                {% for e in all_equipment %}
+                <tr>
+                    <td><strong>{{ e['EID'] }}</strong></td>
+                    <td>{{ e['Name'] }}</td>
+                    <td>{{ e['Type'] }}</td>
+                    <td>
+                        <span class="badge bg-{{ 'success' if e['Status']=='Available' else ('danger' if e['Status']=='Retired' else 'warning text-dark') }}">
+                            {{ e['Status'] }}
+                        </span>
+                    </td>
+                    <td>{{ e['Pur_Date'] }}</td>
+                    <td>
+                        <button type="button" class="btn btn-warning btn-sm" 
+                                data-bs-toggle="modal" 
+                                data-bs-target="#editEquipModal"
+                                data-eid="{{ e['EID'] }}"
+                                data-name="{{ e['Name'] }}"
+                                data-type="{{ e['Type'] }}"
+                                data-date="{{ e['Pur_Date'] }}"
+                                data-status="{{ e['Status'] }}">
+                            Edit
+                        </button>
+                        <form method="post" style="display:inline;" onsubmit="return confirm('Delete this equipment?');">
+                            <input type="hidden" name="delete_equipment" value="true">
+                            <input type="hidden" name="eid_to_delete" value="{{ e['EID'] }}">
+                            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- FILTERED LIST -->
+<div class="card border-info">
+    <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+        <span>Filtered Equipment List</span>
+        <form method="post" class="d-inline-flex gap-2">
+            <button type="submit" name="filter_status" value="All" class="btn btn-sm btn-light {{ 'active' if filter_status == 'All' }}">All</button>
+            <button type="submit" name="filter_status" value="In Use" class="btn btn-sm btn-light {{ 'active' if filter_status == 'In Use' }}">In Use</button>
+            <button type="submit" name="filter_status" value="Available" class="btn btn-sm btn-light {{ 'active' if filter_status == 'Available' }}">Available</button>
+            <button type="submit" name="filter_status" value="Retired" class="btn btn-sm btn-light {{ 'active' if filter_status == 'Retired' }}">Retired</button>
+        </form>
+    </div>
+    <div class="card-body">
+        <p class="text-muted small">Showing: <strong>{{ filter_status }}</strong></p>
+        <table class="table table-sm">
+            <thead><tr><th>Equipment Name</th><th>Status</th><th>Current User</th><th>Project/Purpose</th></tr></thead>
+            <tbody>
+                {% for row in filtered_list %}
+                <tr>
+                    <td>{{ row['EquipName'] }}</td>
+                    <td>
+                        <span class="badge bg-{{ 'success' if row['Status']=='Available' else ('danger' if row['Status']=='Retired' else 'warning text-dark') }}">
+                            {{ row['Status'] }}
+                        </span>
+                    </td>
+                    <td>{{ row['MemberName'] if row['MemberName'] else '-' }}</td>
+                    <td>{{ row['ProjectName'] if row['ProjectName'] else '-' }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4" class="text-center">No equipment found for this filter.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- EDIT MODAL -->
+<div class="modal fade" id="editEquipModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title">Edit Equipment</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <form method="post">
+                    <input type="hidden" name="update_equipment" value="true">
+                    
+                    <!-- Basic Info -->
+                    <div class="mb-3">
+                        <label>ID</label>
+                        <input type="number" name="eid" id="edit_eid" class="form-control" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label>Name</label>
+                        <input type="text" name="name" id="edit_name" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label>Type</label>
+                        <input type="text" name="type" id="edit_type" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label>Purchase Date</label>
+                        <input type="date" name="pur_date" id="edit_date" class="form-control" required>
+                    </div>
+                    
+                    <!-- Status Dropdown -->
+                    <div class="mb-3">
+                        <label>Status</label>
+                        <select name="status" id="edit_status" class="form-control" onchange="toggleUsageFields()">
+                            <option value="Available">Available</option>
+                            <option value="In Use">In Use</option>
+                            <option value="Retired">Retired</option>
+                        </select>
+                    </div>
+
+                    <!-- HIDDEN USAGE FIELDS -->
+                    <div id="usageFields" class="p-3 bg-light border rounded mb-3" style="display:none;">
+                        <h6 class="text-primary">Assign Usage</h6>
+                        <small class="text-muted d-block mb-2">Max 3 users allowed simultaneously.</small>
+                        
+                        <div class="mb-2">
+                            <label class="small">Assign to Member:</label>
+                            <select name="assign_mid" class="form-control">
+                                <option value="">-- Select Member --</option>
+                                {% for m in member_list %}
+                                    <option value="{{ m['MID'] }}">{{ m['Name'] }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-2">
+                            <label class="small">Project / Purpose:</label>
+                            <input type="text" name="assign_purpose" class="form-control" placeholder="e.g. AI Research">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Toggle Fields based on "In Use" selection
+    function toggleUsageFields() {
+        var status = document.getElementById("edit_status").value;
+        var fields = document.getElementById("usageFields");
+        if (status === "In Use") {
+            fields.style.display = "block";
+        } else {
+            fields.style.display = "none";
+        }
+    }
+
+    // Populate Modal
+    var editModal = document.getElementById('editEquipModal');
+    editModal.addEventListener('show.bs.modal', function (event) {
+        var button = event.relatedTarget;
+        document.getElementById('edit_eid').value = button.getAttribute('data-eid');
+        document.getElementById('edit_name').value = button.getAttribute('data-name');
+        document.getElementById('edit_type').value = button.getAttribute('data-type');
+        document.getElementById('edit_date').value = button.getAttribute('data-date');
+        
+        var status = button.getAttribute('data-status');
+        document.getElementById('edit_status').value = status;
+        
+        
+        toggleUsageFields();
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,257 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<h2 class="mb-4">Project Management</h2>
+
+<!-- SEARCH PROJECT DETAILS (NEW) -->
+<div class="card mb-4 border-info">
+    <div class="card-header bg-info text-white">Search Project Details</div>
+    <div class="card-body">
+        <form method="post" class="row g-3 align-items-center">
+            <input type="hidden" name="search_project_details" value="true">
+            <div class="col-auto">
+                <label class="col-form-label">Enter Project ID:</label>
+            </div>
+            <div class="col-auto">
+                <input type="number" name="search_pid" class="form-control" placeholder="e.g. 1" required>
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-outline-info">Get Full Details</button>
+            </div>
+        </form>
+
+        {% if project_search_details %}
+        <div class="mt-4 p-3 bg-light border rounded">
+            <div class="row">
+                <div class="col-md-8">
+                    <h4>{{ project_search_details['Title'] }} <span class="badge bg-secondary text-white small">ID: {{ project_search_details['PID'] }}</span></h4>
+                    <p class="mb-1"><strong>Status:</strong> 
+                        <span class="badge bg-{{ 'success' if project_search_details['Status']=='Active' else 'secondary' }}">
+                            {{ project_search_details['Status'] }}
+                        </span>
+                    </p>
+                    <p class="mb-1"><strong>Leader:</strong> {{ project_search_details['LeaderName'] }} (ID: {{ project_search_details['LeaderID'] }})</p>
+                    <p class="mb-0 text-muted small">Start: {{ project_search_details['Start_Date'] }}</p>
+                </div>
+            </div>
+            
+            <hr>
+            
+            <h6>Project Team Members:</h6>
+            {% if project_search_members %}
+            <table class="table table-sm table-bordered bg-white">
+                <thead class="table-light">
+                    <tr><th>Member ID</th><th>Name</th><th>Type</th><th>Role</th><th>Hours/Wk</th></tr>
+                </thead>
+                <tbody>
+                    {% for m in project_search_members %}
+                    <tr>
+                        <td>{{ m['MID'] }}</td>
+                        <td>{{ m['Name'] }}</td>
+                        <td>{{ m['Member_Type'] }}</td>
+                        <td>{{ m['Role'] }}</td>
+                        <td>{{ m['Hours'] }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+                <p class="text-muted small">No members currently assigned to this project.</p>
+            {% endif %}
+        </div>
+        {% elif request.method == 'POST' and 'search_project_details' in request.form %}
+            <div class="alert alert-warning mt-3">No project found with that ID.</div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- ADD NEW PROJECT -->
+<div class="card mb-4 border-success">
+    <div class="card-header bg-success text-white">Add New Project</div>
+    <div class="card-body">
+        <form method="post">
+            <input type="hidden" name="add_project" value="true">
+            <div class="row g-2">
+                <div class="col-md-2"><input type="number" name="pid" class="form-control" placeholder="ID" required></div>
+                <div class="col-md-4"><input type="text" name="title" class="form-control" placeholder="Title" required></div>
+                <div class="col-md-3">
+                    <select name="lead_mid" class="form-control">
+                        <option value="">-- Leader --</option>
+                        {% for f in faculty_list %}
+                        <option value="{{ f['MID'] }}">{{ f['Name'] }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select name="status" class="form-control">
+                        <option>Active</option><option>Completed</option><option>Paused</option>
+                    </select>
+                </div>
+                <div class="col-md-1"><button class="btn btn-success w-100">Add</button></div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- PROJECT LIST -->
+<div class="card shadow-sm mb-5">
+    <div class="card-header bg-dark text-white">All Projects Overview</div>
+    <div class="card-body p-0">
+        <table class="table table-striped table-hover align-middle mb-0">
+            <thead class="table-secondary">
+                <tr><th>ID</th><th>Title</th><th>Leader</th><th>Status</th><th>Actions</th></tr>
+            </thead>
+            <tbody>
+                {% for p in all_projects %}
+                <tr>
+                    <td><strong>{{ p['PID'] }}</strong></td>
+                    <td>{{ p['Title'] }}</td>
+                    <td>{{ p['Leader_Name'] if p['Leader_Name'] else '-' }}</td>
+                    <td>
+                        <span class="badge bg-{{ 'success' if p['Status']=='Active' else 'secondary' }}">{{ p['Status'] }}</span>
+                    </td>
+                    <td>
+                        <button type="button" class="btn btn-warning btn-sm" 
+                                data-bs-toggle="modal" 
+                                data-bs-target="#editProjectModal"
+                                data-pid="{{ p['PID'] }}"
+                                data-title="{{ p['Title'] }}"
+                                data-status="{{ p['Status'] }}"
+                                data-lead="{{ p['Lead_MID'] }}">
+                            Edit
+                        </button>
+                        <form method="post" style="display:inline;" onsubmit="return confirm('Delete this project?');">
+                            <input type="hidden" name="delete_project" value="true">
+                            <input type="hidden" name="pid_to_delete" value="{{ p['PID'] }}">
+                            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- SEARCH MEMBERS BY GRANT -->
+<div class="card border-primary">
+    <div class="card-header bg-primary text-white">Find Members by Grant Funding</div>
+    <div class="card-body">
+        <form method="post" class="row g-3 align-items-center mb-3">
+            <input type="hidden" name="grant_member_search" value="true">
+            <div class="col-auto">
+                <label class="col-form-label">Enter Grant ID:</label>
+            </div>
+            <div class="col-auto">
+                <input type="number" name="search_gid" class="form-control" placeholder="e.g. 500" required>
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-outline-primary">Search Records</button>
+            </div>
+        </form>
+
+        {% if grant_search_results is not none %}
+            {% if grant_search_results %}
+                <h6 class="text-muted">Search Results:</h6>
+                <table class="table table-bordered">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Member ID</th>
+                            <th>Member Name</th>
+                            <th>Member Type</th>
+                            <th>Project ID</th>
+                            <th>Project Title</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in grant_search_results %}
+                        <tr>
+                            <td>{{ row['MID'] }}</td>
+                            <td>{{ row['Name'] }}</td>
+                            <td>{{ row['Member_Type'] }}</td>
+                            <td>{{ row['Project_ID'] }}</td>
+                            <td>{{ row['Project_Title'] }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                
+                {% if grant_mentorships %}
+                <div class="mt-4 p-3 bg-light border rounded">
+                    <h6 class="text-primary mb-3">Relationship Details (Mentorships on Same Project):</h6>
+                    <ul class="list-group">
+                        {% for rel in grant_mentorships %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>
+                                In Project <strong>{{ rel['Project_Title'] }}</strong>: 
+                                <span class="fw-bold">{{ rel['Mentor_Name'] }}</span> (Mentor) 
+                                <span class="text-muted">&rarr;</span> 
+                                <span class="fw-bold">{{ rel['Mentee_Name'] }}</span> (Mentee)
+                            </span>
+                            <span class="badge bg-info rounded-pill">Mentorship</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% else %}
+                    <p class="text-muted mt-3 ms-1"><small>No mentorship relationships found among these members on the same project.</small></p>
+                {% endif %}
+
+            {% else %}
+                <div class="alert alert-warning">No records found for that Grant ID.</div>
+            {% endif %}
+        {% endif %}
+    </div>
+</div>
+
+<!-- EDIT PROJECT MODAL -->
+<div class="modal fade" id="editProjectModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title">Edit Project</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <form method="post">
+                    <input type="hidden" name="update_project" value="true">
+                    <div class="mb-3">
+                        <label>Project ID</label>
+                        <input type="number" name="pid" id="edit_pid" class="form-control" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label>Title</label>
+                        <input type="text" name="title" id="edit_title" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label>Leader</label>
+                        <select name="lead_mid" id="edit_lead" class="form-control">
+                            <option value="">-- Select Leader --</option>
+                            {% for f in faculty_list %}
+                                <option value="{{ f['MID'] }}">{{ f['Name'] }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label>Status</label>
+                        <select name="status" id="edit_status" class="form-control">
+                            <option>Active</option><option>Completed</option><option>Paused</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    var editModal = document.getElementById('editProjectModal');
+    editModal.addEventListener('show.bs.modal', function (event) {
+        var button = event.relatedTarget;
+        document.getElementById('edit_pid').value = button.getAttribute('data-pid');
+        document.getElementById('edit_title').value = button.getAttribute('data-title');
+        document.getElementById('edit_status').value = button.getAttribute('data-status');
+        var lead = button.getAttribute('data-lead');
+        var leadSelect = document.getElementById('edit_lead');
+        if(lead && lead !== 'None') { leadSelect.value = lead; } else { leadSelect.value = ""; }
+    });
+</script>
+{% endblock %}

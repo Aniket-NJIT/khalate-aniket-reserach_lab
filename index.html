@@ -1,0 +1,38 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="jumbotron text-center">
+    <h1 class="display-4">Welcome to the Lab Manager</h1>
+    <p class="lead">Select a module below to begin managing the research lab.</p>
+    <hr class="my-4">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Members & Projects</h5>
+                    <p class="card-text">Manage lab members & projects.</p>
+                    <a href="/members" class="btn btn-primary">Go to Members</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Equipment Tracking</h5>
+                    <p class="card-text">Check equipment status and current usage.</p>
+                    <a href="/equipment" class="btn btn-primary">Go to Equipment</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Reports</h5>
+                    <p class="card-text">View publication stats and grant reports.</p>
+                    <a href="/reports" class="btn btn-primary">Go to Reports</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

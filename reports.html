@@ -1,0 +1,101 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<h2>Grant & Publication Reports</h2>
+
+<div class="row">
+    <!-- Top Publisher -->
+    <div class="col-md-6">
+        <div class="card mb-4 text-white bg-success">
+            <div class="card-header">Top Publisher</div>
+            <div class="card-body">
+                {% if top_pub %}
+                    <h3 class="card-title">{{ top_pub['Name'] }}</h3>
+                    <p class="card-text">Total Publications: {{ top_pub['Pub_Count'] }}</p>
+                {% else %}
+                    <p>No publication data available.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Avg Pubs -->
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">Avg Student Pubs (By Major)</div>
+            <ul class="list-group list-group-flush">
+                {% for row in avg_pubs %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        {{ row['Major'] }}
+                        <span class="badge bg-primary rounded-pill">{{ "%.2f"|format(row['Avg_Val']) }}</span>
+                    </li>
+                {% else %}
+                    <li class="list-group-item">No student data found.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+
+<hr>
+
+<!-- Active Projects -->
+<div class="card mb-4">
+    <div class="card-header">Find Active Projects by Grant & Date</div>
+    <div class="card-body">
+        <form method="post" action="/reports">
+            <div class="row g-3 align-items-center">
+                <div class="col-auto">
+                    <input type="number" name="grant_id" class="form-control" placeholder="Grant ID (e.g. 500)" required>
+                </div>
+                <div class="col-auto">
+                    <input type="date" name="start_date" class="form-control" required>
+                </div>
+                <div class="col-auto">
+                    <input type="date" name="end_date" class="form-control" required>
+                </div>
+                <div class="col-auto">
+                    <button type="submit" name="report_type" value="grant_projects" class="btn btn-primary">Count Projects</button>
+                </div>
+            </div>
+        </form>
+        {% if grant_proj_count is not none %}
+        <div class="alert alert-info mt-3">
+            Number of active projects found: <strong>{{ grant_proj_count }}</strong>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Prolific Members -->
+<div class="card mb-4">
+    <div class="card-header">Top 3 Prolific Members (By Grant)</div>
+    <div class="card-body">
+        <form method="post" action="/reports">
+            <div class="input-group mb-3">
+                <input type="number" name="grant_id_prolific" class="form-control" placeholder="Grant ID (e.g. 500)" required>
+                <button class="btn btn-outline-primary" type="submit" name="report_type" value="prolific">Find Members</button>
+            </div>
+        </form>
+
+        {% if prolific_members %}
+        <div class="list-group">
+            {% for member in prolific_members %}
+            <div class="list-group-item list-group-item-action">
+                <div class="d-flex w-100 justify-content-between">
+                    <h5 class="mb-1">{{ member['Name'] }}</h5>
+                    <span class="badge bg-primary rounded-pill">{{ member['Total_Pubs'] }} Pubs</span>
+                </div>
+                <p class="mb-1"><strong>Project:</strong> {{ member['Project_Title'] }}</p>
+                <small class="text-muted">
+                    <strong>Pub IDs:</strong> {{ member['Pub_IDs'] }}<br>
+                    <strong>Titles:</strong> {{ member['Pub_Titles'] }}
+                </small>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}
